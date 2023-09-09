@@ -1,0 +1,83 @@
+// Define your Google Calendar ID (replace with your calendar ID)
+var googleCalendarId = "your_calendar_id@example.com"; // Replace with your Google Calendar ID
+
+// Define your LINE Notify Access Token (replace with your access token)
+var accessToken = "your_line_notify_access_token"; // Replace with your LINE Notify Access Token
+
+function sendDailyEventMessage() {
+  try {
+    // Get the calendar using its ID
+    var calendar = CalendarApp.getCalendarById(googleCalendarId);
+
+    // Get the current date
+    var today = new Date();
+
+    // Retrieve events for the current day
+    var dailyEventList = calendar.getEventsForDay(today);
+
+    // Initialize the message
+    var message = "";
+
+    // Iterate through the daily events
+    for (var i = 0; i < dailyEventList.length; i++) {
+      var event = dailyEventList[i];
+
+      // Extract event title
+      var eventTitle = event.getTitle();
+
+      // Custom message to add for each event
+      var eventNote = "Happy Birthday! Wishing you joy in everything you do and good health, both physically and mentally.";
+
+      // Construct the event message
+      var eventMessage = `\n${eventTitle}\n${eventNote}\n`;
+
+      // Append event message to the main message
+      message += eventMessage;
+    }
+
+    // Check if there are events to notify
+    if (message !== "") {
+      // Send the message to LINE Notify
+      sendMessageToLINE(message);
+    } else {
+      Logger.log("No events found for today.");
+    }
+  } catch (error) {
+    // Handle any errors that occur
+    Logger.log("Error: " + error);
+  }
+}
+
+function sendMessageToLINE(message) {
+  // LINE Notify API endpoint
+  var lineNotifyEndPoint = "https://notify-api.line.me/api/notify";
+
+  // Prepare the message data
+  var formData = {
+    "message": message,
+  };
+
+  // Set up HTTP request options
+  var options = {
+    "headers": {
+      "Authorization": "Bearer " + accessToken,
+    },
+    "method": 'post',
+    "payload": formData,
+  };
+
+  try {
+    // Send the message using UrlFetchApp
+    var response = UrlFetchApp.fetch(lineNotifyEndPoint, options);
+
+    // Check the response code to confirm if the message was sent successfully
+    if (response.getResponseCode() === 200) {
+      Logger.log("Message sent successfully.");
+    } else {
+      Logger.log("Sending message failed. Response code: " + response.getResponseCode());
+    }
+  } catch (error) {
+    // Handle any errors that occur during the request
+    Logger.log("Error: " + error);
+  }
+}
