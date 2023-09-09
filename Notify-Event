@@ -1,0 +1,61 @@
+// This Google Apps Script fetches daily events from a Google Calendar and sends them as notifications to LINE Notify.
+
+// Function to fetch and notify daily events
+function fetchAndNotifyDailyEvents() {
+  // Define your Google Calendar ID and LINE Notify access token
+  var googleCalendarId = "YOUR_GOOGLE_CALENDAR_ID_HERE";
+  var accessToken = "YOUR_LINE_NOTIFY_ACCESS_TOKEN_HERE";
+
+  // Get the calendar and today's date
+  var calendar = CalendarApp.getCalendarById(googleCalendarId);
+  var today = new Date();
+
+  // Get events for the current day
+  var dailyEvents = calendar.getEventsForDay(today);
+
+  // Prepare the message
+  var message = "";
+
+  // Iterate through daily events and format the message
+  for (var i = 0; i < dailyEvents.length; i++) {
+    var event = dailyEvents[i];
+    var eventTitle = "Event Title: " + event.getTitle();
+    var eventStartTime = "Start Time: " + event.getStartTime().toTimeString().slice(0, 8);
+    var eventDescription = "Description: " + event.getDescription();
+
+    message += "\n" + eventTitle + "\n" + eventStartTime + "\n" + eventDescription + "\n";
+  }
+
+  // Check if there are events for the day and send the message
+  if (message !== "") {
+    sendLineNotifyMessage(accessToken, message);
+  }
+}
+
+// Function to send a message to LINE Notify
+function sendLineNotifyMessage(accessToken, message) {
+  var lineNotifyEndpoint = "https://notify-api.line.me/api/notify";
+
+  var formData = {
+    "message": message
+  };
+
+  var options = {
+    "method": 'post',
+    "payload": formData,
+    "headers": {
+      "Authorization": "Bearer " + accessToken
+    }
+  };
+
+  try {
+    var response = UrlFetchApp.fetch(lineNotifyEndpoint, options);
+    if (response.getResponseCode() !== 200) {
+      Logger.log("Sending message failed. Response code: " + response.getResponseCode());
+    } else {
+      Logger.log("Message sent successfully.");
+    }
+  } catch (error) {
+    Logger.log("Error: " + error.name + " - " + error.message);
+  }
+}
